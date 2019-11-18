@@ -1,14 +1,21 @@
 import Didact from "./didact";
 
-function App() {
-  return (
-    /** @jsx Didact.createElement */
-    <div className="App">
-      <h1>Hello CodeSandbox</h1>
-      <h2>Start editing to see some magic happen!</h2>
+/** @jsx Didact.createElement */
+const container = document.getElementById("root");
+
+const updateValue = e => {
+  rerender(e.target.value);
+};
+
+const rerender = value => {
+  const element = (
+    <div>
+      <input onInput={updateValue} value={value} />
+      <h2>Hello {value}</h2>
     </div>
   );
-}
 
-const rootElement = document.getElementById("root");
-Didact.render(App(), rootElement);
+  Didact.render(element, container);
+};
+
+rerender("World");
