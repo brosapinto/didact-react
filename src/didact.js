@@ -88,13 +88,25 @@ function updateDom(dom, prevProps, nextProps) {
     });
 }
 
+function commitDeletion(fiber, domParent) {
+  if (fiber.dom) {
+    domParent.removeChild(fiber.dom);
+  } else {
+    commitDeletion(fiber.child, domParent);
+  }
+}
+
 function commitWork(fiber) {
   if (!fiber) {
     return;
   }
 
-  // recursevely commit tree to DOM
-  const domParent = fiber.parent.dom;
+  // go up the tree until we get a fiber with dom
+  let domParentFiber = fiber.parent;
+  while (!domParentFiber.dom) {
+    domParentFiber = domParentFiber.parent;
+  }
+  const domParent = domParentFiber;
 
   switch (fiber.effectTag) {
     case "PLACEMENT":
@@ -107,7 +119,7 @@ function commitWork(fiber) {
       break;
 
     default:
-      domParent.removeChild(fiber.dom);
+      commitDeletion(fiber, domParent);
   }
 
   commitWork(fiber.child);
@@ -190,15 +202,27 @@ function reconcileChildren(wipFiber, elements) {
   }
 }
 
-function performUnitOfWork(fiber) {
-  // create dom node
+function updateFunctionComponent(fiber) {
+  const children = [fiber.type(fiber.props)];
+  reconcileChildren(fiber, children);
+}
+
+function updateHostComponent(fiber) {
   if (!fiber.dom) {
     fiber.dom = createDom(fiber);
   }
 
-  // for each children, create a new fiber
-  const elements = fiber.props.children;
-  reconcileChildren(fiber, elements);
+  reconcileChildren(fiber, fiber.props.children);
+}
+
+function performUnitOfWork(fiber) {
+  const isFuncComponent = fiber.type instanceof Function;
+
+  if (isFuncComponent) {
+    updateFunctionComponent(fiber);
+  } else {
+    updateHostComponent(fiber);
+  }
 
   // search for the next unit of work
   // first go down on fiber children
