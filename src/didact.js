@@ -1,8 +1,8 @@
-const isProp = key => key !== "children";
+const isNil = val => val == null;
 const isNew = (prev, next) => key => prev[key] !== next[key];
 const isGone = (prev, next) => key => !(key in next);
 const isEvent = key => key.startsWith("on");
-const isProperty = key => key !== "children" && !isEvent(key);
+const isProp = key => key !== "children" && !isEvent(key);
 const toEventType = name => name.toLowerCase().substring(2);
 
 function createTextElement(text) {
@@ -64,7 +64,7 @@ function updateDom(dom, prevProps, nextProps) {
 
   // remove old properties
   Object.keys(prevProps)
-    .filter(isProperty)
+    .filter(isProp)
     .filter(isDead)
     .forEach(name => {
       dom[name] = "";
@@ -72,7 +72,7 @@ function updateDom(dom, prevProps, nextProps) {
 
   // upsert props
   Object.keys(nextProps)
-    .filter(isProperty)
+    .filter(isProp)
     .filter(isNew(prevProps, nextProps))
     .forEach(name => {
       dom[name] = nextProps[name];
@@ -106,15 +106,15 @@ function commitWork(fiber) {
   while (!domParentFiber.dom) {
     domParentFiber = domParentFiber.parent;
   }
-  const domParent = domParentFiber;
+  const domParent = domParentFiber.dom;
 
   switch (fiber.effectTag) {
     case "PLACEMENT":
-      if (fiber.dom != null) domParent.appendChild(fiber.dom);
+      if (!isNil(fiber.dom)) domParent.appendChild(fiber.dom);
       break;
 
     case "UPDATE":
-      if (fiber.dom != null)
+      if (!isNil(fiber.dom))
         updateDom(fiber.dom, fiber.alternate.props, fiber.props);
       break;
 
@@ -150,7 +150,7 @@ function reconcileChildren(wipFiber, elements) {
   let prevSibling = null;
   let oldFiber = wipFiber.alternate && wipFiber.alternate.child;
 
-  while (index < elements.lenght || oldFiber !== null) {
+  while (index < elements.length || !isNil(oldFiber)) {
     const element = elements[index];
     let newFiber = null;
 
@@ -292,10 +292,10 @@ function workLoop(deadline) {
     commitRoot();
   }
 
-  requestIdleCallback(workLoop);
+  window.requestIdleCallback(workLoop);
 }
 
-requestIdleCallback(workLoop);
+window.requestIdleCallback(workLoop);
 
 const Didact = {
   createElement,
