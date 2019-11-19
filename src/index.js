@@ -1,10 +1,10 @@
 import Didact from "./didact";
 
 /** @jsx Didact.createElement */
-function App({ props }) {
-  return <h1>Hi {props.name}</h1>;
+function Counter() {
+  const [state, setState] = Didact.useState(1);
+  return <h1 onClick={() => setState(c => c + 1)}>Count: {state}</h1>;
 }
-
-const element = <App name="foo" />;
+const element = <Counter />;
 const container = document.getElementById("root");
 Didact.render(element, container);
